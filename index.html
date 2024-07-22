@@ -257,7 +257,7 @@
             formData.append('areas', JSON.stringify(selectedAreas));
 
             try {
-                const response = await fetch('http://localhost:5000/gettables', {
+                const response = await fetch('https://6b4c3500-eb48-4702-9e29-bbec6df3ea41-00-nmeuywi51jek.riker.replit.dev/gettables', {
                     method: 'POST',
                     body: formData
                 });
