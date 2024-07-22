@@ -261,7 +261,7 @@
     <input type="file" id="pdf-upload" accept="application/pdf">
 
     <div id="button-container">
-        <button id="submit-btn">Converter para CSV</button>
+        <button id="submit-btn">Enviar para o Backend</button>
         <button id="download-csv-btn">Baixar CSV</button>
     </div>
     <script>
@@ -379,7 +379,7 @@
             formData.append('areas', JSON.stringify(selectedAreas));
 
             try {
-                const response = await fetch('https://6b4c3500-eb48-4702-9e29-bbec6df3ea41-00-nmeuywi51jek.riker.replit.dev/gettables', {
+                const response = await fetch('https://pythonextracttablles-production.up.railway.app/gettables', {
                     method: 'POST',
                     body: formData
                 })
@@ -404,7 +404,7 @@
             formData.append('areas', JSON.stringify(selectedAreas));
 
             try {
-                const response = await fetch('https://6b4c3500-eb48-4702-9e29-bbec6df3ea41-00-nmeuywi51jek.riker.replit.dev/gettables', {
+                const response = await fetch('https://pythonextracttablles-production.up.railway.app/gettables', {
                     method: 'POST',
                     body: formData
                 });
