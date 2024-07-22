@@ -2,3 +2,4 @@ Flask
 tabula
 tabula-py
 pandas
+flask_cors
