@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Table Selector</title>
+    <script src="./Build/pdf.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-top: 60px;
+            /* Margem para compensar o espaço do cabeçalho fixo */
+            overflow: auto;
+            max-height: calc(100vh - 80px);
+            /* Ajusta o max-height para a área de visualização do PDF */
+            width: calc(100vw - 620px);
+            /* Ajusta a largura para não sobrepor a área de seleção e resultados */
+        }
+
+        #pdf-container {
+            position: relative;
+            border: 1px solid black;
+            overflow: auto;
+        }
+
+        .selection {
+            border: 2px dashed red;
+            position: absolute;
+        }
+
+        #selected-areas,
+        #results-container {
+            width: 300px;
+            height: 100vh;
+            overflow-y: auto;
+            border: 1px solid black;
+            background-color: white;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
+        }
+
+        #selected-areas {
+            position: fixed;
+            top: 0;
+            right: 300px;
+        }
+
+        #selected-areas h3,
+        #results-container h3 {
+            margin: 0;
+            padding-bottom: 10px;
+        }
+
+        #selected-areas div {
+            margin-bottom: 5px;
+        }
+
+        #results-container {
+            position: fixed;
+            top: 0;
+            right: 0;
+        }
+
+        #results-container pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        #submit-btn,
+        #download-csv-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        #submit-btn:hover,
+        #download-csv-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="selected-areas">
+        <h3>Áreas Selecionadas</h3>
+    </div>
+    <div id="results-container">
+        <h3>Resultados</h3>
+        <pre id="json-results"></pre>
+    </div>
+    <div id="container">
+        <div id="pdf-container"></div>
+    </div>
+    <input type="file" id="pdf-upload" accept="application/pdf" style="position: fixed; top: 20px; left: 20px;">
+    <button id="submit-btn">Enviar para o Backend</button>
+    <button id="download-csv-btn">Baixar CSV</button>
+
+    <script>
+        const pdfContainer = document.getElementById('pdf-container');
+        const selectedAreasDiv = document.getElementById('selected-areas');
+        let selectedAreas = [];
+        let currentPdf = null;
+
+        document.getElementById('pdf-upload').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file.type === 'application/pdf') {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    loadPdf(e.target.result);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        async function loadPdf(data) {
+            const loadingTask = pdfjsLib.getDocument({ data: data });
+            currentPdf = await loadingTask.promise;
+
+            // Clear existing pages
+            pdfContainer.innerHTML = '';
+
+            // Array to hold page containers
+            const pageContainers = [];
+
+            for (let pageNum = 1; pageNum <= currentPdf.numPages; pageNum++) {
+                const page = await currentPdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.0 });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const context = canvas.getContext('2d');
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+                const pageContainer = document.createElement('div');
+                pageContainer.style.position = 'relative';
+                pageContainer.style.width = `${viewport.width}px`;
+                pageContainer.style.height = `${viewport.height}px`;
+                pageContainer.appendChild(canvas);
+
+                pageContainers.push(pageContainer);
+
+                canvas.addEventListener('mousedown', (e) => startSelection(e, pageNum));
+            }
+
+            // Append all page containers to the PDF container
+            pageContainers.forEach(pageContainer => pdfContainer.appendChild(pageContainer));
+
+            const pdfWidth = pageContainers.length > 0 ? pageContainers[0].offsetWidth : 600;
+            const pdfHeight = pageContainers.length > 0 ? pageContainers.reduce((total, pageContainer) => total + pageContainer.offsetHeight, 0) : 800;
+            pdfContainer.style.width = `${pdfWidth}px`;
+            pdfContainer.style.height = `${pdfHeight}px`;
+        }
+
+        function startSelection(event, pageNum) {
+            const rect = event.target.getBoundingClientRect();
+            const startX = event.clientX - rect.left;
+            const startY = event.clientY - rect.top;
+            const selectionDiv = document.createElement('div');
+            selectionDiv.className = 'selection';
+            selectionDiv.style.left = `${startX}px`;
+            selectionDiv.style.top = `${startY}px`;
+
+            event.target.parentElement.appendChild(selectionDiv);
+
+            const onMouseMove = (e) => {
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                selectionDiv.style.width = `${Math.abs(currentX - startX)}px`;
+                selectionDiv.style.height = `${Math.abs(currentY - startY)}px`;
+                selectionDiv.style.left = `${Math.min(currentX, startX)}px`;
+                selectionDiv.style.top = `${Math.min(currentY, startY)}px`;
+            };
+
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                const area = {
+                    pageNum: pageNum,
+                    top: parseInt(selectionDiv.style.top),
+                    left: parseInt(selectionDiv.style.left),
+                    bottom: parseInt(selectionDiv.style.top) + parseInt(selectionDiv.style.height),
+                    right: parseInt(selectionDiv.style.left) + parseInt(selectionDiv.style.width),
+                };
+                selectedAreas.push(area);
+                addSelectedArea(area, selectionDiv);
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        function addSelectedArea(area, selectionDiv) {
+            const areaDiv = document.createElement('div');
+            areaDiv.textContent = `Página ${area.pageNum}: (${area.top}, ${area.left}, ${area.bottom}, ${area.right})`;
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Excluir';
+            deleteBtn.addEventListener('click', () => {
+                selectedAreas = selectedAreas.filter(a => a !== area);
+                areaDiv.remove();
+                selectionDiv.remove();
+            });
+            areaDiv.appendChild(deleteBtn);
+            selectedAreasDiv.appendChild(areaDiv);
+        }
+
+        document.getElementById('submit-btn').addEventListener('click', async () => {
+            const formData = new FormData();
+            formData.append('pdf', document.getElementById('pdf-upload').files[0]);
+            formData.append('areas', JSON.stringify(selectedAreas));
+
+            try {
+                const response = await fetch('http://localhost:5000/gettables', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Erro ao enviar o formulário');
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        });
+
+        function displayResults(data) {
+            const resultsContainer = document.getElementById('json-results');
+            resultsContainer.textContent = JSON.stringify(data, null, 2);
+        }
+
+        document.getElementById('download-csv-btn').addEventListener('click', async () => {
+            const formData = new FormData();
+            formData.append('pdf', document.getElementById('pdf-upload').files[0]);
+            formData.append('areas', JSON.stringify(selectedAreas));
+
+            try {
+                const response = await fetch('http://localhost:5000/gettables', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Erro ao baixar o CSV');
+
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'tabelas.csv';
+                link.click();
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        });
+
+    </script>
+</body>
+
+</html>
