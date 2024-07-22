@@ -8,115 +8,262 @@
     <style>
         body {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            flex-direction: column;
             min-height: 100vh;
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         #container {
             display: flex;
             gap: 20px;
             align-items: flex-start;
-            margin-top: 60px;
-            /* Margem para compensar o espaço do cabeçalho fixo */
+            margin-top: 10px;
+            margin-left: 20px;
             overflow: auto;
             max-height: calc(100vh - 80px);
-            /* Ajusta o max-height para a área de visualização do PDF */
-            width: calc(100vw - 620px);
-            /* Ajusta a largura para não sobrepor a área de seleção e resultados */
+            width: 100%;
         }
 
         #pdf-container {
             position: relative;
-            border: 1px solid black;
+            border: 1px solid #ddd;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             overflow: auto;
         }
 
         .selection {
-            border: 2px dashed red;
+            border: 2px dashed #5d6dff;
             position: absolute;
+            background-color: rgba(100, 97, 255, 0.2);
         }
 
         #selected-areas,
         #results-container {
             width: 300px;
-            height: 100vh;
+            height: calc(100vh - 80px);
             overflow-y: auto;
-            border: 1px solid black;
+            border: 1px solid #ddd;
             background-color: white;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             box-sizing: border-box;
         }
 
         #selected-areas {
             position: fixed;
-            top: 0;
-            right: 300px;
-        }
-
-        #selected-areas h3,
-        #results-container h3 {
-            margin: 0;
-            padding-bottom: 10px;
-        }
-
-        #selected-areas div {
-            margin-bottom: 5px;
+            top: 60px;
+            right: 320px;
+            background-color: #f9f9f9;
         }
 
         #results-container {
             position: fixed;
-            top: 0;
-            right: 0;
+            top: 60px;
+            right: 20px;
+            background-color: #f9f9f9;
         }
 
         #results-container pre {
             white-space: pre-wrap;
             word-wrap: break-word;
+            margin: 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        #button-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         #submit-btn,
         #download-csv-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-right: 10px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
         }
 
         #submit-btn:hover,
         #download-csv-btn:hover {
             background-color: #0056b3;
         }
+
+        #pdf-upload {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba (0, 0, 0, 0.1);
+
+            overflow: auto;
+        }
+
+        .selection {
+            border: 2px dashed #5d6dff;
+            position: absolute;
+            background-color: rgba(100, 97, 255, 0.2);
+        }
+
+        #selected-areas,
+        #results-container {
+            width: 300px;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        #selected-areas {
+            position: fixed;
+            top: 60px;
+            right: 320px;
+            background-color: #f9f9f9;
+        }
+
+        #selected-areas h3,
+        #results-container h3 {
+            margin: 0;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #selected-areas div {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #results-container {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background-color: #f9f9f9;
+        }
+
+        #results-container pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        #button-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #submit-btn,
+        #download-csv-btn {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        #submit-btn:hover,
+        #download-csv-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #pdf-upload {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsividade */
+        @media (max-width: 1366px) {
+            #selected-areas {
+                right: 20px;
+                /* Ajusta a posição dos areas selecionadas em telas menores */
+                width: calc(50% - 30px);
+                /* Ajusta a largura */
+            }
+
+            #results-container {
+                right: 20px;
+                /* Ajusta a posição dos resultados em telas menores */
+                width: calc(50% - 30px);
+                /* Ajusta a largura */
+            }
+
+            #button-container {
+                bottom: 20px;
+                right: 20px;
+                flex-direction: row;
+                gap: 10px;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <header>
+        <h1>PDF Table Selector</h1>
+    </header>
+
     <div id="selected-areas">
         <h3>Áreas Selecionadas</h3>
     </div>
-    <div id="results-container">
-        <h3>Resultados</h3>
-        <pre id="json-results"></pre>
-    </div>
+
     <div id="container">
         <div id="pdf-container"></div>
     </div>
-    <input type="file" id="pdf-upload" accept="application/pdf" style="position: fixed; top: 20px; left: 20px;">
-    <button id="submit-btn">Enviar para o Backend</button>
-    <button id="download-csv-btn">Baixar CSV</button>
 
+    <input type="file" id="pdf-upload" accept="application/pdf">
+
+    <div id="button-container">
+        <button id="submit-btn">Enviar para o Backend</button>
+        <button id="download-csv-btn">Baixar CSV</button>
+    </div>
     <script>
         const pdfContainer = document.getElementById('pdf-container');
         const selectedAreasDiv = document.getElementById('selected-areas');
@@ -235,7 +382,7 @@
                 const response = await fetch('https://6b4c3500-eb48-4702-9e29-bbec6df3ea41-00-nmeuywi51jek.riker.replit.dev/gettables', {
                     method: 'POST',
                     body: formData
-                });
+                })
 
                 if (!response.ok) throw new Error('Erro ao enviar o formulário');
 
