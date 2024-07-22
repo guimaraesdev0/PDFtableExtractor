@@ -10,6 +10,10 @@ import io
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/')
+def home():
+    return "API alive", 200
+
 @app.route('/gettables', methods=['POST'])
 def extract_tables():
     if 'pdf' not in request.files or 'areas' not in request.form:
