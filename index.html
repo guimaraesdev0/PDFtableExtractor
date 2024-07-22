@@ -207,7 +207,10 @@
         #download-csv-btn:hover {
             background-color: #0056b3;
         }
-
+        #download-csv-btn:disabled{
+            background-color: #01264e;
+            color: gray;
+        }
         #pdf-upload {
             position: fixed;
             top: 20px;
@@ -262,7 +265,7 @@
 
     <div id="button-container">
         <button id="submit-btn">Enviar para o Backend</button>
-        <button id="download-csv-btn">Baixar CSV</button>
+        <button id="download-csv-btn" disabled>Baixar CSV</button>
     </div>
     <script>
         const pdfContainer = document.getElementById('pdf-container');
@@ -389,7 +392,9 @@
                 const data = await response.json();
                 displayResults(data);
             } catch (error) {
-                console.error('Erro:', error);
+                console.log("Arquivo está pronto para download")
+                document.getElementById("download-csv-btn").disabled = false;
+
             }
         });
 
